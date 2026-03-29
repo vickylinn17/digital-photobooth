@@ -357,6 +357,10 @@ export default function BoothScreen({ onExit }) {
   const updateStatus = (msg, lit = false) => { setStatus(msg); setStatusLit(lit) }
 
   const captureFrame = () => {
+    const video = videoRef.current
+    const VW = video.videoWidth  || 1280
+    const VH = video.videoHeight || 960
+    // Always output 4:3 landscape to match the viewfinder crop
     const W = 1280, H = 960
     const canvas = document.createElement('canvas')
     canvas.width = W; canvas.height = H
@@ -364,7 +368,16 @@ export default function BoothScreen({ onExit }) {
     ctx.translate(W, 0); ctx.scale(-1, 1)
     const f = getFilterCss(currentFilter)
     if (f !== 'none') ctx.filter = f
-    ctx.drawImage(videoRef.current, 0, 0, W, H)
+    // Simulate object-fit:cover so the capture matches what the user saw
+    const videoAspect = VW / VH
+    const targetAspect = W / H
+    let sx = 0, sy = 0, sw = VW, sh = VH
+    if (videoAspect > targetAspect) {
+      sw = VH * targetAspect; sx = (VW - sw) / 2
+    } else {
+      sh = VW / targetAspect; sy = (VH - sh) / 2
+    }
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, W, H)
     return canvas.toDataURL('image/jpeg', 0.93)
   }
 

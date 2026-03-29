@@ -1261,8 +1261,13 @@
     padding-top: 0;
   }
 
-  /* Narrower tray + strip on mobile */
-  .print-tray { padding: 10px 12px 16px; }
-  .print-slot { width: 224px; }
-  .strip-card-done { width: 222px !important; }
+  /* Narrower tray + strip on mobile — fit-content stops it stretching full width */
+  .print-tray {
+    padding: 10px 12px 16px;
+    width: fit-content;
+    align-self: center;
+  }
+  .print-slot-housing { width: 224px; }
+  .print-slot { width: 220px; }
+  .strip-card-done { width: 218px !important; }
 }
