@@ -24,81 +24,13 @@ const STRIP_STYLES = [
   { key: 'contact',   label: 'Contact'    },
 ]
 
-const STRIP_PATTERNS = [
-  { key: 'none',    label: 'None'    },
-  { key: 'gingham', label: 'Gingham' },
-  { key: 'floral',  label: 'Floral'  },
-  { key: 'bows',    label: 'Bows'    },
-  { key: 'nature',  label: 'Nature'  },
-]
-
 const TITLE_MAX = 22
 const wait = ms => new Promise(r => setTimeout(r, ms))
 const loadImg = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.src = src })
 const getFilterCss = key => FILTERS.find(f => f.key === key)?.css ?? 'none'
 const todayStr = () => new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
-function drawCanvasPattern(ctx, patternKey, cw, ch) {
-  if (!patternKey || patternKey === 'none') return
-  const tile = document.createElement('canvas')
-  const tc = tile.getContext('2d')
-
-  if (patternKey === 'gingham') {
-    tile.width = 48; tile.height = 48
-    tc.fillStyle = 'rgba(255,255,255,0.09)'; tc.fillRect(0, 0, 24, 24); tc.fillRect(24, 24, 24, 24)
-    tc.strokeStyle = 'rgba(255,255,255,0.06)'; tc.lineWidth = 1
-    tc.strokeRect(0, 0, 48, 48); tc.strokeRect(24, 0, 24, 24); tc.strokeRect(0, 24, 24, 24)
-  } else if (patternKey === 'floral') {
-    tile.width = 90; tile.height = 90
-    const drawFlower = (x, y, r) => {
-      for (let i = 0; i < 5; i++) {
-        const a = (i / 5) * Math.PI * 2
-        tc.beginPath()
-        tc.ellipse(x + Math.cos(a) * r * 1.5, y + Math.sin(a) * r * 1.5, r, r * 0.55, a, 0, Math.PI * 2)
-        tc.fillStyle = 'rgba(255,255,255,0.13)'; tc.fill()
-      }
-      tc.beginPath(); tc.arc(x, y, r * 0.65, 0, Math.PI * 2)
-      tc.fillStyle = 'rgba(255,255,255,0.2)'; tc.fill()
-    }
-    drawFlower(45, 45, 10)
-  } else if (patternKey === 'bows') {
-    tile.width = 110; tile.height = 88
-    const drawBow = (cx, cy) => {
-      tc.fillStyle = 'rgba(255,255,255,0.14)'
-      tc.beginPath(); tc.moveTo(cx, cy)
-      tc.bezierCurveTo(cx - 22, cy - 18, cx - 38, cy - 12, cx - 30, cy)
-      tc.bezierCurveTo(cx - 38, cy + 12, cx - 22, cy + 18, cx, cy); tc.fill()
-      tc.beginPath(); tc.moveTo(cx, cy)
-      tc.bezierCurveTo(cx + 22, cy - 18, cx + 38, cy - 12, cx + 30, cy)
-      tc.bezierCurveTo(cx + 38, cy + 12, cx + 22, cy + 18, cx, cy); tc.fill()
-      tc.beginPath(); tc.arc(cx, cy, 6, 0, Math.PI * 2)
-      tc.fillStyle = 'rgba(255,255,255,0.22)'; tc.fill()
-    }
-    drawBow(55, 44)
-  } else if (patternKey === 'nature') {
-    tile.width = 88; tile.height = 88
-    const drawLeaf = (x, y, angle) => {
-      tc.save(); tc.translate(x, y); tc.rotate(angle)
-      tc.beginPath(); tc.moveTo(0, -18)
-      tc.bezierCurveTo(14, -10, 14, 10, 0, 18)
-      tc.bezierCurveTo(-14, 10, -14, -10, 0, -18)
-      tc.fillStyle = 'rgba(255,255,255,0.11)'; tc.fill()
-      tc.beginPath(); tc.moveTo(0, -18); tc.lineTo(0, 18)
-      tc.strokeStyle = 'rgba(255,255,255,0.07)'; tc.lineWidth = 1; tc.stroke()
-      tc.restore()
-    }
-    drawLeaf(28, 28, -0.4); drawLeaf(65, 60, 0.8)
-  }
-
-  const pat = ctx.createPattern(tile, 'repeat')
-  ctx.save()
-  ctx.globalAlpha = 0.75
-  ctx.fillStyle = pat
-  ctx.fillRect(0, 0, cw, ch)
-  ctx.restore()
-}
-
-async function renderStrip(photos, styleKey, title, patternKey = 'none') {
+async function renderStrip(photos, styleKey, title) {
   await document.fonts.ready
   const imgs = await Promise.all(photos.map(loadImg))
   const PW = 760, PH = 570, PAD = 26, GAP = 12
@@ -111,7 +43,7 @@ async function renderStrip(photos, styleKey, title, patternKey = 'none') {
     canvas.width = CW; canvas.height = HDR + PAD + (PH + GAP) * 4 - GAP + PAD + FTR
     const CH = canvas.height
     ctx.fillStyle = '#080808'; ctx.fillRect(0, 0, CW, CH)
-    drawCanvasPattern(ctx, patternKey, CW, CH)
+
     ctx.strokeStyle = 'rgba(237,232,220,0.2)'; ctx.lineWidth = 1; ctx.strokeRect(5,5,CW-10,CH-10)
     ctx.strokeStyle = 'rgba(237,232,220,0.07)'; ctx.strokeRect(9,9,CW-18,CH-18)
     ctx.textAlign = 'center'; ctx.font = 'italic 900 38px "Playfair Display", Georgia, serif'
@@ -132,7 +64,7 @@ async function renderStrip(photos, styleKey, title, patternKey = 'none') {
     canvas.width = CW; canvas.height = HDR + PAD + (PH + GAP) * 4 - GAP + PAD + FTR
     const CH = canvas.height
     ctx.fillStyle = '#030303'; ctx.fillRect(0,0,CW,CH)
-    drawCanvasPattern(ctx, patternKey, CW, CH)
+
     ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1.5; ctx.strokeRect(4,4,CW-8,CH-8)
     ctx.textAlign = 'center'; ctx.font = '900 28px "Special Elite", monospace'
     ctx.fillStyle = 'rgba(255,255,255,0.82)'; ctx.fillText(title.toUpperCase(), CW/2, HDR/2+11)
@@ -150,7 +82,7 @@ async function renderStrip(photos, styleKey, title, patternKey = 'none') {
     canvas.width = CW; canvas.height = HDR + PAD + (PH + GAP) * 4 - GAP + PAD + FTR
     const CH = canvas.height
     ctx.fillStyle = '#fce4ec'; ctx.fillRect(0,0,CW,CH)
-    drawCanvasPattern(ctx, patternKey, CW, CH)
+
     ctx.strokeStyle = '#f48fb1'; ctx.lineWidth = 2.5; ctx.strokeRect(5,5,CW-10,CH-10)
     ctx.lineWidth = 1; ctx.strokeRect(12,12,CW-24,CH-24)
     ctx.textAlign = 'center'; ctx.font = 'italic 900 40px "Playfair Display", Georgia, serif'
@@ -173,7 +105,7 @@ async function renderStrip(photos, styleKey, title, patternKey = 'none') {
     canvas.width = CW; canvas.height = HDR + PAD + (PH + GAP) * 4 - GAP + PAD + FTR
     const CH = canvas.height
     ctx.fillStyle = '#f5c800'; ctx.fillRect(0,0,CW,CH)
-    drawCanvasPattern(ctx, patternKey, CW, CH)
+
     ctx.strokeStyle = '#111'; ctx.lineWidth = 4; ctx.strokeRect(4,4,CW-8,CH-8)
     ctx.lineWidth = 1.5; ctx.strokeRect(11,11,CW-22,CH-22)
     ctx.textAlign = 'center'; ctx.font = '900 42px "Special Elite", monospace'
@@ -202,7 +134,7 @@ async function renderStrip(photos, styleKey, title, patternKey = 'none') {
     canvas.width = CW; canvas.height = HDR + PAD + (PPOL_H + GAP_P) * 4 - GAP_P + PAD + FTR
     const CH = canvas.height
     ctx.fillStyle = '#e8e3d8'; ctx.fillRect(0,0,CW,CH)
-    drawCanvasPattern(ctx, patternKey, CW, CH)
+
     ctx.textAlign = 'center'; ctx.font = 'italic 700 30px "Playfair Display", Georgia, serif'
     ctx.fillStyle = '#4a3828'; ctx.globalAlpha = 0.7; ctx.fillText(title, CW/2, HDR/2+12); ctx.globalAlpha = 1
     for (let i = 0; i < 4; i++) {
@@ -224,7 +156,7 @@ async function renderStrip(photos, styleKey, title, patternKey = 'none') {
     const bgGrad = ctx.createLinearGradient(0,0,0,CH)
     bgGrad.addColorStop(0,'#1a0533'); bgGrad.addColorStop(0.5,'#2a0445'); bgGrad.addColorStop(1,'#0f0120')
     ctx.fillStyle = bgGrad; ctx.fillRect(0,0,CW,CH)
-    drawCanvasPattern(ctx, patternKey, CW, CH)
+
     ctx.strokeStyle = 'rgba(180,0,255,0.07)'; ctx.lineWidth = 1
     for (let x = 0; x < CW; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke() }
     for (let y = 0; y < CH; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke() }
@@ -255,7 +187,7 @@ async function renderStrip(photos, styleKey, title, patternKey = 'none') {
     const CH = canvas.height
     ctx.fillStyle = '#c4956a'; ctx.fillRect(0,0,CW,CH)
     ctx.fillStyle = '#cda17a'; ctx.fillRect(6,6,CW-12,CH-12)
-    drawCanvasPattern(ctx, patternKey, CW, CH)
+
     ctx.strokeStyle = '#8b5e3c'; ctx.lineWidth = 3; ctx.strokeRect(4,4,CW-8,CH-8)
     ctx.textAlign = 'center'; ctx.font = 'italic 800 42px "Playfair Display", Georgia, serif'
     ctx.fillStyle = '#3d1f0a'; ctx.globalAlpha = 0.85; ctx.fillText(title, CW/2, HDR/2+18); ctx.globalAlpha = 1
@@ -289,7 +221,7 @@ async function renderStrip(photos, styleKey, title, patternKey = 'none') {
     canvas.width = CW; canvas.height = HDR + PAD + (PH_C + GAP_C) * 4 - GAP_C + PAD + FTR
     const CH = canvas.height
     ctx.fillStyle = '#181818'; ctx.fillRect(0,0,CW,CH)
-    drawCanvasPattern(ctx, patternKey, CW, CH)
+
     ctx.textAlign = 'left'; ctx.font = '12px "Special Elite", monospace'
     ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.fillText(`${title.toUpperCase()} · ISO 400 · F/2.8 · 1/60`, ML, 32)
     for (let y = 0; y < CH; y += 36) {
@@ -319,7 +251,6 @@ export default function BoothScreen({ onExit }) {
 
   const [currentFilter, setCurrentFilter] = useState('none')
   const [stripStyle, setStripStyle] = useState('classic')
-  const [stripPattern, setStripPattern] = useState('none')
   const [stripTitle, setStripTitle] = useState('Photo Booth')
   const [photos, setPhotos] = useState([])
   const [status, setStatus] = useState('Ready when you are.')
@@ -353,6 +284,13 @@ export default function BoothScreen({ onExit }) {
     })
     return () => { if (localStream) localStream.getTracks().forEach(t => t.stop()) }
   }, [])
+
+  // Re-attach stream when returning from done screen
+  useEffect(() => {
+    if (!done && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current
+    }
+  }, [done])
 
   const updateStatus = (msg, lit = false) => { setStatus(msg); setStatusLit(lit) }
 
@@ -414,7 +352,7 @@ export default function BoothScreen({ onExit }) {
   const handleDownload = async () => {
     if (photosRef.current.length < 4) return
     const title = stripTitle.trim() || 'Photo Booth'
-    const canvas = await renderStrip(photosRef.current, stripStyle, title, stripPattern)
+    const canvas = await renderStrip(photosRef.current, stripStyle, title)
     const a = document.createElement('a')
     a.download = `photobooth-${Date.now()}.png`
     a.href = canvas.toDataURL('image/png')
@@ -451,7 +389,7 @@ export default function BoothScreen({ onExit }) {
                   {printing && <div className="printer-scan-light" />}
                 </div>
               </div>
-              <div className={`strip-card strip-card-done strip-style-${stripStyle}${stripPattern !== 'none' ? ` strip-pattern-${stripPattern}` : ''} strip-printing`}>
+              <div className={`strip-card strip-card-done strip-style-${stripStyle} strip-printing`}>
                 <div className="strip-card-title">{stripTitle || 'Photo Booth'}</div>
                 <div className="strip-slots">
                   {[0,1,2,3].map(i => (
@@ -492,21 +430,6 @@ export default function BoothScreen({ onExit }) {
                       onClick={() => setStripStyle(s.key)}
                     >
                       {s.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="done-field">
-                <label className="done-field-label">Add a pattern</label>
-                <div className="pattern-chips">
-                  {STRIP_PATTERNS.map(p => (
-                    <button
-                      key={p.key}
-                      className={`pattern-chip pattern-chip-${p.key} ${stripPattern === p.key ? 'active' : ''}`}
-                      onClick={() => setStripPattern(p.key)}
-                    >
-                      {p.label}
                     </button>
                   ))}
                 </div>
@@ -690,22 +613,7 @@ export default function BoothScreen({ onExit }) {
             </div>
           </div>
 
-          <div className="strip-pattern-section">
-            <div className="strip-style-head" style={{marginBottom:'0.35rem'}}>Add a pattern</div>
-            <div className="pattern-chips">
-              {STRIP_PATTERNS.map(p => (
-                <button
-                  key={p.key}
-                  className={`pattern-chip pattern-chip-${p.key} ${stripPattern === p.key ? 'active' : ''}`}
-                  onClick={() => setStripPattern(p.key)}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className={`strip-card strip-style-${stripStyle}${stripPattern !== 'none' ? ` strip-pattern-${stripPattern}` : ''}`}>
+          <div className={`strip-card strip-style-${stripStyle}`}>
             <div className="strip-card-title">{stripTitle || 'Photo Booth'}</div>
             <div className="strip-slots">
               {[0,1,2,3].map(i => (
