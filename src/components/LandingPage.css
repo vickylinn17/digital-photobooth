@@ -531,7 +531,11 @@ body.cursor-hidden .coin-cursor {
   .coin-zone { cursor: pointer; }
   .hint-mobile { display: inline; }
   .hint-desktop { display: none; }
-  .start-here { display: none; } /* arrow assumes hover; hide on touch */
+}
+
+/* Hide the off-screen arrow on any screen too small to show it */
+@media (max-width: 680px) {
+  .start-here { display: none; }
 }
 
 /* Small phones: shrink cabinet slightly so it fits */
