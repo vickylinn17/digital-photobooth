@@ -519,3 +519,24 @@ body.cursor-hidden .coin-cursor {
   margin-bottom: 2px;
   opacity: 0.55;
 }
+
+/* Desktop shows hover text, mobile shows tap text */
+.hint-mobile { display: none; }
+.hint-desktop { display: inline; }
+
+/* ── MOBILE & TOUCH ── */
+
+/* Touch devices: coin zone is tappable */
+@media (hover: none) {
+  .coin-zone { cursor: pointer; }
+  .hint-mobile { display: inline; }
+  .hint-desktop { display: none; }
+  .start-here { display: none; } /* arrow assumes hover; hide on touch */
+}
+
+/* Small phones: shrink cabinet slightly so it fits */
+@media (max-width: 380px) {
+  .cabinet-3d { width: 295px; }
+  .entrance-frame { width: 215px; }
+  .sign-tile { width: 20px; height: 24px; font-size: 0.68rem; }
+}

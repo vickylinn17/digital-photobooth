@@ -78,10 +78,10 @@ export default function LandingPage({ onEnter }) {
                 <div className="placard-main"><em>Forever memories made here</em></div>
               </div>
 
-              {/* Coin slot hover target */}
+              {/* Coin slot — hover on desktop, tap on mobile */}
               <div className="coin-zone"
                 onMouseEnter={handleCoinHover}
-                style={{ cursor: 'none' }}
+                onClick={handleCoinHover}
               >
                 <div className="coin-slot-wrap">
                   <div className="coin-slot-housing">
@@ -128,7 +128,8 @@ export default function LandingPage({ onEnter }) {
 
       <p className="hover-hint">
         <span className="hint-arrow">↑</span>
-        hover the coin slot to peek inside
+        <span className="hint-desktop">hover the coin slot to peek inside</span>
+        <span className="hint-mobile">tap the coin slot to start</span>
       </p>
     </div>
   )
