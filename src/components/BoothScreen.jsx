@@ -30,9 +30,18 @@ const loadImg = src => new Promise(res => { const i = new Image(); i.onload = ()
 const getFilterCss = key => FILTERS.find(f => f.key === key)?.css ?? 'none'
 const todayStr = () => new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
-async function renderStrip(photos, styleKey, title) {
+async function renderStrip(photos, styleKey, title, filterCss = 'none') {
   await document.fonts.ready
-  const imgs = await Promise.all(photos.map(loadImg))
+  const rawImgs = await Promise.all(photos.map(loadImg))
+  const imgs = rawImgs.map(img => {
+    if (filterCss === 'none') return img
+    const fc = document.createElement('canvas')
+    fc.width = img.naturalWidth; fc.height = img.naturalHeight
+    const fctx = fc.getContext('2d')
+    fctx.filter = filterCss
+    fctx.drawImage(img, 0, 0)
+    return fc
+  })
   const PW = 760, PH = 570, PAD = 26, GAP = 12
   const CW = PW + PAD * 2
   const canvas = document.createElement('canvas')
@@ -315,8 +324,6 @@ export default function BoothScreen({ onExit }) {
     canvas.width = W; canvas.height = H
     const ctx = canvas.getContext('2d')
     if (facingMode === 'user') { ctx.translate(W, 0); ctx.scale(-1, 1) }
-    const f = getFilterCss(currentFilter)
-    if (f !== 'none') ctx.filter = f
     // Simulate object-fit:cover so the capture matches what the user saw
     const videoAspect = VW / VH
     const targetAspect = W / H
@@ -363,7 +370,7 @@ export default function BoothScreen({ onExit }) {
   const handleDownload = async () => {
     if (photosRef.current.length < 4) return
     const title = stripTitle.trim() || 'Photo Booth'
-    const canvas = await renderStrip(photosRef.current, stripStyle, title)
+    const canvas = await renderStrip(photosRef.current, stripStyle, title, getFilterCss(currentFilter))
     const filename = `photobooth-${Date.now()}.png`
 
     // Use Web Share API on mobile if available
@@ -422,7 +429,7 @@ export default function BoothScreen({ onExit }) {
                 <div className="strip-slots">
                   {[0,1,2,3].map(i => (
                     <div key={i} className="strip-slot filled">
-                      <img src={photos[i]} alt={`Photo ${i+1}`} />
+                      <img src={photos[i]} alt={`Photo ${i+1}`} style={{ filter: getFilterCss(currentFilter) }} />
                     </div>
                   ))}
                 </div>
