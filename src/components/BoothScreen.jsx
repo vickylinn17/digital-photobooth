@@ -261,6 +261,7 @@ export default function BoothScreen({ onExit }) {
   const [showFlash, setShowFlash] = useState(false)
   const [noCameraMsg, setNoCameraMsg] = useState(false)
   const [captureDisabled, setCaptureDisabled] = useState(false)
+  const [facingMode, setFacingMode] = useState('user')
   const [done, setDone] = useState(false)
   const [busy, setBusy] = useState(false)
   const [printing, setPrinting] = useState(false)
@@ -268,13 +269,12 @@ export default function BoothScreen({ onExit }) {
     new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
   )
 
-  useEffect(() => {
-    let localStream = null
-    navigator.mediaDevices.getUserMedia({
-      video: { width: { ideal: 1280 }, height: { ideal: 960 }, facingMode: 'user' },
+  const startCamera = (facing) => {
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop())
+    return navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1280 }, height: { ideal: 960 }, facingMode: facing },
       audio: false,
     }).then(s => {
-      localStream = s
       streamRef.current = s
       if (videoRef.current) videoRef.current.srcObject = s
       setNoCameraMsg(false)
@@ -282,8 +282,19 @@ export default function BoothScreen({ onExit }) {
       setNoCameraMsg(true)
       setCaptureDisabled(true)
     })
-    return () => { if (localStream) localStream.getTracks().forEach(t => t.stop()) }
+  }
+
+  useEffect(() => {
+    startCamera('user')
+    return () => { if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop()) }
   }, [])
+
+  const handleFlipCamera = () => {
+    if (busy) return
+    const next = facingMode === 'user' ? 'environment' : 'user'
+    setFacingMode(next)
+    startCamera(next)
+  }
 
   // Re-attach stream when returning from done screen
   useEffect(() => {
@@ -303,7 +314,7 @@ export default function BoothScreen({ onExit }) {
     const canvas = document.createElement('canvas')
     canvas.width = W; canvas.height = H
     const ctx = canvas.getContext('2d')
-    ctx.translate(W, 0); ctx.scale(-1, 1)
+    if (facingMode === 'user') { ctx.translate(W, 0); ctx.scale(-1, 1) }
     const f = getFilterCss(currentFilter)
     if (f !== 'none') ctx.filter = f
     // Simulate object-fit:cover so the capture matches what the user saw
@@ -518,12 +529,21 @@ export default function BoothScreen({ onExit }) {
 
           <div className="cam-frame">
             <video ref={videoRef} autoPlay playsInline muted
-              style={{ filter: getFilterCss(currentFilter) }} className="cam-video" />
+              style={{ filter: getFilterCss(currentFilter) }}
+              className={`cam-video${facingMode === 'user' ? ' cam-mirrored' : ''}`} />
             <div className="cam-grain" />
             <div className="cam-vignette" />
             <div className="corner-screw screw-tl" /><div className="corner-screw screw-tr" />
             <div className="corner-screw screw-bl" /><div className="corner-screw screw-br" />
             <div className={`status-light ${busy ? 'red' : 'green'}`} />
+            <button className="flip-camera-btn" onClick={handleFlipCamera} disabled={busy} aria-label="Flip camera">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 7h-9"/>
+                <path d="M14 17H5"/>
+                <polyline points="17 4 20 7 17 10"/>
+                <polyline points="7 14 4 17 7 20"/>
+              </svg>
+            </button>
             {countdownNum !== null && (
               <div className="cam-overlay">
                 <div key={countdownNum} className="countdown-num animate">{countdownNum}</div>
