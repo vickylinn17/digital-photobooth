@@ -353,8 +353,25 @@ export default function BoothScreen({ onExit }) {
     if (photosRef.current.length < 4) return
     const title = stripTitle.trim() || 'Photo Booth'
     const canvas = await renderStrip(photosRef.current, stripStyle, title)
+    const filename = `photobooth-${Date.now()}.png`
+
+    // Use Web Share API on mobile if available
+    if (navigator.share && navigator.canShare) {
+      try {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+        const file = new File([blob], filename, { type: 'image/png' })
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'My Photo Strip' })
+          return
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') return // user cancelled share sheet
+      }
+    }
+
+    // Fallback: direct download
     const a = document.createElement('a')
-    a.download = `photobooth-${Date.now()}.png`
+    a.download = filename
     a.href = canvas.toDataURL('image/png')
     a.click()
   }
@@ -436,7 +453,7 @@ export default function BoothScreen({ onExit }) {
               </div>
 
               <button className="done-download-btn" onClick={handleDownload}>
-                Download Strip
+                {navigator.share && navigator.canShare ? 'Share Strip' : 'Download Strip'}
               </button>
               <button className="done-reset-btn" onClick={handleReset}>
                 Take New Photos
